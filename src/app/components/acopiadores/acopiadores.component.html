@@ -1,0 +1,1035 @@
+﻿<!-- ENCABEZADO -->
+<div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">
+      Acopiadores
+    </h1>
+    <button (click)="showNewForm()"
+      class="bg-blue-500 hover:bg-blue-600 text-white font-bold w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+      title="Nuevo Acopiador">
+      ➕
+    </button>
+  </div>
+</div>
+
+<!-- FILTROS -->
+<div class="bg-white rounded-lg shadow-lg p-4 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
+    <!-- Filtro de Búsqueda General -->
+    <div class="md:col-span-2">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Buscar
+      </label>
+      <input type="text" [(ngModel)]="filters.searchText" (input)="onSearchChange()" placeholder="Nombre, ID SAGARPA..."
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-400">
+    </div>
+
+    <!-- Filtro de Estado -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Estado
+      </label>
+      <select [(ngModel)]="filters.status" (change)="onStatusFilterChange()"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+        <option value="all">Todos</option>
+        <option value="active">Activos</option>
+        <option value="inactive">Inactivos</option>
+      </select>
+    </div>
+
+    <!-- Filtro de Coordenadas -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Coordenadas
+      </label>
+      <select [(ngModel)]="filters.mapStatus" (change)="onMapStatusFilterChange()"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+        <option value="all">Todos</option>
+        <option value="with-map">Con mapa</option>
+        <option value="without-map">Sin mapa</option>
+      </select>
+    </div>
+
+    <!-- Filtro de ID SAGARPA -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        ID SAGARPA
+      </label>
+      <select [(ngModel)]="filters.sagarpaStatus" (change)="onSagarpaFilterChange()"
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+        <option value="all">Todos</option>
+        <option value="with-sagarpa">Con ID SAGARPA</option>
+        <option value="without-sagarpa">Sin ID SAGARPA</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Botón limpiar filtros y resumen -->
+  <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+    <div class="text-sm text-gray-600">
+      @if (filters.searchText || filters.status !== 'all' || filters.mapStatus !== 'all' || filters.sagarpaStatus !==
+      'all') {
+      <span class="inline-flex items-center">
+        Filtros activos
+        @if (filters.searchText) {
+        <button (click)="removeFilter('searchText')"
+          class="ml-2 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs rounded-full transition-colors cursor-pointer group"
+          title="Click para eliminar este filtro">
+          "{{ filters.searchText }}" <span class="ml-1 group-hover:text-blue-900">×</span>
+        </button>
+        }
+        @if (filters.status !== 'all') {
+        <button (click)="removeFilter('status')"
+          class="ml-1 px-2 py-1 bg-green-100 hover:bg-green-200 text-green-800 text-xs rounded-full transition-colors cursor-pointer group"
+          title="Click para eliminar este filtro">
+          {{ filters.status === 'active' ? 'Activos' : 'Inactivos' }} <span
+            class="ml-1 group-hover:text-green-900">×</span>
+        </button>
+        }
+        @if (filters.mapStatus !== 'all') {
+        <button (click)="removeFilter('mapStatus')"
+          class="ml-1 px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-800 text-xs rounded-full transition-colors cursor-pointer group"
+          title="Click para eliminar este filtro">
+          {{ filters.mapStatus === 'with-map' ? 'Con mapa' : 'Sin mapa' }} <span
+            class="ml-1 group-hover:text-purple-900">×</span>
+        </button>
+        }
+        @if (filters.sagarpaStatus !== 'all') {
+        <button (click)="removeFilter('sagarpaStatus')"
+          class="ml-1 px-2 py-1 bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs rounded-full transition-colors cursor-pointer group"
+          title="Click para eliminar este filtro">
+          {{ filters.sagarpaStatus === 'with-sagarpa' ? 'Con SAGARPA' : 'Sin SAGARPA' }} <span
+            class="ml-1 group-hover:text-orange-900">×</span>
+        </button>
+        }
+      </span>
+      } @else {
+      <span class="text-gray-500">Sin filtros aplicados</span>
+      }
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <!-- Contador de coincidencias -->
+      <span class="text-sm text-gray-600 font-medium">
+        @if (hasActiveFilters()) {
+          <!-- Con filtros activos -->
+          {{ acopiadores.length }} resultados
+          @if (totalPages > 1) {
+            <span class="text-gray-400">de {{ totalItems }} filtrados (página {{ currentPage }}/{{ totalPages }})</span>
+          } @else {
+            <span class="text-gray-400">de {{ totalItems }} filtrados</span>
+          }
+        } @else {
+          <!-- Sin filtros -->
+          {{ acopiadores.length }} de {{ totalItems }} total
+          @if (totalPages > 1) {
+            <span class="text-gray-400">(página {{ currentPage }}/{{ totalPages }})</span>
+          }
+        }
+      </span>
+
+      <button (click)="clearFilters()"
+        [disabled]="filters.searchText === '' && filters.status === 'all' && filters.mapStatus === 'all' && filters.sagarpaStatus === 'all'"
+        class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        Limpiar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MENSAJES DE ERROR -->
+@if (error) {
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+  <strong>Error:</strong> {{ error }}
+  <button (click)="error = null" class="float-right text-red-700 hover:text-red-900">–</button>
+</div>
+}
+
+
+<!-- LOADING SPINNER -->
+@if (loading) {
+
+<div class="flex justify-center py-8">
+  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  <span class="ml-2 text-gray-600">Cargando...</span>
+</div>
+
+}
+
+
+<!-- FORMULARIO MODAL MEJORADO -->
+@if (showForm) {
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-10 mx-auto p-6 border w-full max-w-2xl shadow-xl rounded-lg bg-white">
+    
+    <!-- Header del Modal -->
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-semibold text-gray-900">
+        {{ editingAcopiador ? 'Editar Acopiador' : 'Nuevo Acopiador' }}
+      </h3>
+      <button (click)="cancelForm()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Indicador de Pasos -->
+    <div class="mb-8">
+      <div class="flex items-center justify-center">
+        @for (step of [1,2,3]; track step) {
+          <div class="flex items-center" [class.opacity-50]="step > formStep">
+            <!-- Círculo del paso -->
+            <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 text-sm font-semibold"
+                 [class]="step < formStep ? 'bg-green-500 border-green-500 text-white' : 
+                         step === formStep ? 'bg-blue-500 border-blue-500 text-white' : 
+                         'bg-gray-200 border-gray-300 text-gray-500'">
+              @if (step < formStep) {
+                ✓
+              } @else {
+                {{ step }}
+              }
+            </div>
+            
+            <!-- Línea conectora -->
+            @if (step < 3) {
+              <div class="w-20 h-1 mx-2"
+                   [class]="step < formStep ? 'bg-green-500' : 'bg-gray-300'"></div>
+            }
+          </div>
+        }
+      </div>
+      
+      <!-- Títulos de los pasos -->
+      <div class="flex justify-center mt-4">
+        <div class="grid grid-cols-3 gap-16 text-sm font-medium text-center">
+          <span [class]="formStep === 1 ? 'text-blue-600' : formValidation.step1 ? 'text-green-600' : 'text-gray-500'">
+            Información Básica
+          </span>
+          <span [class]="formStep === 2 ? 'text-blue-600' : formValidation.step2 ? 'text-green-600' : 'text-gray-500'">
+            Datos Fiscales
+          </span>
+          <span [class]="formStep === 3 ? 'text-blue-600' : formValidation.step3 ? 'text-green-600' : 'text-gray-500'">
+            Dirección
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="saveAcopiador()" class="space-y-6">
+      
+      <!-- PASO 1: INFORMACIÓN BÁSICA -->
+      @if (formStep === 1) {
+        <div class="space-y-4">
+          <h4 class="text-lg font-medium text-gray-800 border-b pb-2">📋 Información del Acopiador</h4>
+          
+          <!-- Nombre -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="text-red-500">*</span> Nombre Completo
+            </label>
+            <input type="text" 
+                   [(ngModel)]="formAcopiador.nombre" 
+                   name="nombre" 
+                   required
+                   (input)="validateCurrentStep()"
+                   placeholder="Ej: Juan Pérez García"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+
+          <!-- ID SAGARPA -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              ID SAGARPA
+              <span class="text-sm text-gray-500">(Opcional)</span>
+            </label>
+            <input type="text" 
+                   [(ngModel)]="formAcopiador.idSagarpa" 
+                   name="idSagarpa"
+                   placeholder="Ej: SAG-2024-001"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+
+          <!-- Tipo de Miel -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="text-red-500">*</span> Tipo de Miel
+            </label>
+            <select [(ngModel)]="formAcopiador.tipoDeMiel" 
+                    name="tipoDeMiel" 
+                    (change)="validateCurrentStep()"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="1">🌸 Multifloral</option>
+              <option value="2">🌻 Monofloral</option>
+              <option value="3">🌿 Orgánica</option>
+            </select>
+          </div>
+        </div>
+      }
+
+      <!-- PASO 2: DATOS FISCALES -->
+      @if (formStep === 2) {
+        <div class="space-y-4">
+          <h4 class="text-lg font-medium text-gray-800 border-b pb-2">🏢 Datos Fiscales</h4>
+          
+          <!-- Razón Social -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="text-red-500">*</span> Razón Social
+            </label>
+            <input type="text" 
+                   [(ngModel)]="formAcopiador.razonSocial" 
+                   name="razonSocial" 
+                   required
+                   (input)="validateCurrentStep()"
+                   placeholder="Ej: Juan Pérez García"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          </div>
+
+          <!-- RFC -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="text-red-500">*</span> RFC
+            </label>
+            <input type="text" 
+                   [(ngModel)]="formAcopiador.rfc" 
+                   name="rfc" 
+                   required
+                   (input)="onRfcInput()"
+                   placeholder="Ej: PEGJ800101ABC"
+                   maxlength="13"
+                   [class]="validateRfc() ? 'w-full px-4 py-3 border-2 border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500' : 
+                           'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'">
+            @if (validateRfc()) {
+              <p class="mt-1 text-sm text-red-600">{{ validateRfc() }}</p>
+            }
+          </div>
+
+          <!-- CURP -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              CURP
+              <span class="text-sm text-gray-500">(Opcional)</span>
+            </label>
+            <input type="text" 
+                   [(ngModel)]="formAcopiador.curp" 
+                   name="curp"
+                   (input)="onCurpInput()"
+                   placeholder="Ej: PEGJ800101HOCRNN01"
+                   maxlength="18"
+                   [class]="validateCurp() ? 'w-full px-4 py-3 border-2 border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500' : 
+                           'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'">
+            @if (validateCurp()) {
+              <p class="mt-1 text-sm text-red-600">{{ validateCurp() }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- PASO 3: DIRECCIÓN -->
+      @if (formStep === 3) {
+        <div class="space-y-4">
+          <h4 class="text-lg font-medium text-gray-800 border-b pb-2">📍 Dirección y Ubicación</h4>
+          
+          <!-- Dirección -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <span class="text-red-500">*</span> Dirección Completa
+            </label>
+            <textarea [(ngModel)]="formAcopiador.direccion" 
+                      name="direccion" 
+                      required
+                      (input)="validateCurrentStep()"
+                      rows="3"
+                      placeholder="Ej: Calle Principal #123, Colonia Centro, CP 68000, Oaxaca, Oax."
+                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+          </div>
+
+          <!-- Coordenadas -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Latitud
+                <span class="text-sm text-gray-500">(Opcional)</span>
+              </label>
+              <input type="number" 
+                     [(ngModel)]="formAcopiador.latitud" 
+                     name="latitud"
+                     step="any"
+                     placeholder="Ej: 17.0732"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Longitud
+                <span class="text-sm text-gray-500">(Opcional)</span>
+              </label>
+              <input type="number" 
+                     [(ngModel)]="formAcopiador.longitud" 
+                     name="longitud"
+                     step="any"
+                     placeholder="Ej: -96.7266"
+                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+          </div>
+
+          <!-- Nota sobre coordenadas -->
+          <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                  Las coordenadas son opcionales pero recomendadas para ubicar al acopiador en el mapa.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Error Messages -->
+      @if (error) {
+        <div class="bg-red-50 border border-red-200 rounded-md p-4">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-red-800">{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Botones de Navegación -->
+      <div class="flex justify-between pt-6 border-t">
+        <!-- Botón Anterior -->
+        <button type="button" 
+                (click)="previousStep()" 
+                [disabled]="formStep === 1"
+                class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          ← Anterior
+        </button>
+
+        <!-- Botones de la derecha -->
+        <div class="flex space-x-3">
+          <!-- Cancelar -->
+          <button type="button" 
+                  (click)="cancelForm()"
+                  class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50">
+            Cancelar
+          </button>
+
+          <!-- Siguiente o Guardar -->
+          @if (formStep < maxSteps) {
+            <button type="button" 
+                    (click)="nextStep()" 
+                    [disabled]="!validateCurrentStep()"
+                    class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              Siguiente →
+            </button>
+          } @else {
+            <button type="submit" 
+                    [disabled]="loading || !isFormValid()"
+                    class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              @if (loading) {
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Guardando...
+              } @else {
+                {{ editingAcopiador ? '💾 Actualizar' : '✨ Crear Acopiador' }}
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+}
+
+
+<!-- TABLA DE ACOPIADORES -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            ID
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Nombre
+          </th>
+          <!-- <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Tipo
+          </th> -->
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            ID Sagarpa
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Tipo Miel
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Estado
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Acciones
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        @for (acopiador of acopiadores; track $index) {
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            {{ getRowIndex($index) }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <!-- Modo visualización -->
+            @if (!isEditingNombre(acopiador.idProveedor!)) {
+            <div class="flex items-center group">
+              <span class="mr-2">{{ acopiador.nombre }}</span>
+              <button (click)="startEditNombre(acopiador)"
+                class="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-800 transition-opacity"
+                title="Click para editar nombre">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                  </path>
+                </svg>
+              </button>
+            </div>
+            }
+
+            <!-- Modo edición -->
+            @if (isEditingNombre(acopiador.idProveedor!)) {
+            <div class="flex items-center space-x-2">
+              <input type="text" [(ngModel)]="tempNombre" (keyup)="onNombreKeyup($event, acopiador)"
+                (blur)="saveNombre(acopiador)"
+                class="px-2 py-1 border border-blue-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 flex-1"
+                placeholder="Nombre" [disabled]="savingNombre">
+
+              @if (savingNombre) {
+              <div class="text-blue-600">
+                <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+              </div>
+              } @else {
+              <button (click)="saveNombre(acopiador)" class="text-green-600 hover:text-green-800"
+                title="Guardar (Enter)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </button>
+              <button (click)="cancelEditNombre()" class="text-red-600 hover:text-red-800" title="Cancelar (Escape)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              }
+            </div>
+            }
+          </td>
+          <!-- <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="{
+                    'bg-blue-100 text-blue-800': acopiador.tipo === 'acopiador'
+                   
+                  }">
+              {{ acopiador.tipo }}
+            </span>
+          </td> -->
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <!-- Modo visualización -->
+            @if (!isEditingIdSagarpa(acopiador.idProveedor!)) {
+            <div class="flex items-center group">
+              <span class="mr-2">{{ acopiador.idSagarpa }}</span>
+              <button (click)="startEditIdSagarpa(acopiador)"
+                class="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-800 transition-opacity"
+                title="Click para editar ID SAGARPA">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                  </path>
+                </svg>
+              </button>
+            </div>
+            }
+
+            <!-- Modo edición -->
+            @if (isEditingIdSagarpa(acopiador.idProveedor!)) {
+            <div class="flex items-center space-x-2">
+              <input type="text" [(ngModel)]="tempIdSagarpa" (keyup)="onIdSagarpaKeyup($event, acopiador)"
+                (blur)="saveIdSagarpa(acopiador)"
+                class="px-2 py-1 border border-blue-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0 flex-1"
+                placeholder="ID SAGARPA" [disabled]="savingIdSagarpa" #idSagarpaInput>
+
+              @if (savingIdSagarpa) {
+              <div class="text-blue-600">
+                <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+              </div>
+              } @else {
+              <button (click)="saveIdSagarpa(acopiador)" class="text-green-600 hover:text-green-800"
+                title="Guardar (Enter)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </button>
+              <button (click)="cancelEditIdSagarpa()" class="text-red-600 hover:text-red-800" title="Cancelar (Escape)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+              }
+            </div>
+            }
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              {{ acopiador.tipoDeMiel === 1 ? 'Multifloral' : acopiador.tipoDeMiel === 2 ? 'Monofloral' : 'OrgÃ¡nica' }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [ngClass]="{
+                    'bg-green-100 text-green-800': acopiador.deleteProve === 0,
+                    'bg-red-100 text-red-800': acopiador.deleteProve === 1
+                  }">
+              {{ acopiador.deleteProve === 0 ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            <div class="relative inline-block">
+              <button (click)="toggleMenu(acopiador.idProveedor!); $event.stopPropagation()"
+                class="menu-button btn btn-xs bg-gray-100 hover:bg-gray-200 text-gray-600 w-8 h-8 rounded-full flex items-center justify-center"
+                title="Opciones">
+                ⋮
+              </button>
+              <!-- Dropdown menu -->
+              <div *ngIf="menuAbierto === acopiador.idProveedor" (click)="$event.stopPropagation()"
+                class="dropdown-menu absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-[9999]">
+                
+                <!-- SECCIÓN ACOPIADOR -->
+                <div class="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                  <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Acopiador</span>
+                </div>
+                
+                <button (click)="editAcopiador(acopiador)"
+                  class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150">
+                  ✏️ Editar
+                </button>
+                
+                <button (click)="toggleStatus(acopiador)"
+                  class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150">
+                  {{ acopiador.deleteProve === 0 ? '⏸️ Desactivar' : '▶️ Activar' }}
+                </button>
+                
+                <button (click)="deleteAcopiador(acopiador)"
+                  class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150">
+                  🗑️ Eliminar
+                </button>
+
+                <!-- SECCIÓN MAPA -->
+                <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 border-t border-gray-200 mt-1">
+                  <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mapa</span>
+                </div>
+                
+                <button (click)="verEnMapa(acopiador)" [disabled]="!acopiador.latitud || !acopiador.longitud"
+                  [class]="(!acopiador.latitud || !acopiador.longitud) 
+                      ? 'block w-full text-left px-3 py-2 text-sm text-gray-400 cursor-not-allowed transition-colors duration-150' 
+                      : 'block w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors duration-150'">
+                  🗺️ Ver
+                </button>
+
+                <!-- SECCIÓN CSF -->
+                <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 border-t border-gray-200 mt-1">
+                  <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">CSF</span>
+                </div>
+
+
+                <!-- CSF Menu Section -->
+                @if (acopiador.hasCsf && acopiador.csfFile) {
+                  <!-- Si ya tiene CSF, mostrar solo opción de ver -->
+                  <button (click)="verCsf(acopiador)"
+                    class="block w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors duration-150">
+                    👁️ Ver
+                  </button>
+                } @else {
+                  <!-- Si no tiene CSF, mostrar opción para subir -->
+                  <button (click)="verCsf(acopiador)"
+                    class="block w-full text-left px-3 py-2 text-sm text-purple-600 hover:bg-purple-50 transition-colors duration-150">
+                    📄 Subir
+                  </button>
+                }
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        }
+      </tbody>
+    </table>
+
+    <!-- Mensaje cuando no hay datos -->
+    @if (acopiadores.length === 0 && !loading) {
+    <div class="text-center py-8">
+      <div class="text-gray-500 text-lg">🔭 No hay acopiadores registrados</div>
+      <button (click)="showNewForm()" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+        Crear el primer acopiador
+      </button>
+    </div>
+    }
+
+  </div>
+
+  <!-- CONTROLES DE PAGINACIÓN -->
+  @if (totalItems > 0 && totalPages > 1) {
+  <div class="bg-white px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+    <!-- Selector de registros por página (sin texto) -->
+    <div class="flex items-center">
+      <select (change)="onPageSizeChange($event)" [value]="pageSize"
+        class="border border-gray-300 rounded px-2 py-1 text-sm">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+      </select>
+    </div>
+    <!-- Navegación de páginas -->
+    <div class="flex items-center space-x-2">
+      <!-- Botón Inicio -->
+      <button (click)="goToPage(1)" [disabled]="currentPage <= 1"
+        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title="Ir al inicio">
+        ⏮️
+      </button>
+
+      <!-- Botón Anterior -->
+      <button (click)="previousPage()" [disabled]="currentPage <= 1"
+        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title="Página anterior">
+        ←
+      </button>
+
+      <!-- Números de página -->
+      <div class="flex items-center space-x-1">
+        @if (currentPage > 2) {
+        <button (click)="goToPage(1)"
+          class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+          1
+        </button>
+        @if (currentPage > 3) {
+        <span class="px-2 text-gray-500">...</span>
+        }
+        }
+
+        @if (currentPage > 1) {
+        <button (click)="goToPage(currentPage - 1)"
+          class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+          {{ currentPage - 1 }}
+        </button>
+        }
+
+        <!-- Página actual -->
+        <button class="px-3 py-2 text-sm font-medium text-white bg-blue-500 border border-blue-500 rounded-md">
+          {{ currentPage }}
+        </button>
+
+        @if (currentPage < totalPages) { <button (click)="goToPage(currentPage + 1)"
+          class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+          {{ currentPage + 1 }}
+          </button>
+          }
+
+          @if (currentPage < totalPages - 1) { @if (currentPage < totalPages - 2) { <span class="px-2 text-gray-500">
+            ...</span>
+            }
+            <button (click)="goToPage(totalPages)"
+              class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+              {{ totalPages }}
+            </button>
+            }
+      </div>
+
+      <!-- Botón Siguiente -->
+      <button (click)="nextPage()" [disabled]="currentPage >= totalPages"
+        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title="Página siguiente">
+        →
+      </button>
+
+      <!-- Botón Final -->
+      <button (click)="goToPage(totalPages)" [disabled]="currentPage >= totalPages"
+        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        title="Ir al final">
+        ⏭️
+      </button>
+    </div>
+
+    <!-- Espacio vacío para balancear el layout -->
+    <div class="w-20"></div>
+  </div>
+  }
+
+
+</div>
+
+<!-- MODAL DE COORDENADAS -->
+@if (showMapModal && selectedAcopiadorForMap) {
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+  <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <!-- Header del modal -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">
+          📍 Ubicación de {{ selectedAcopiadorForMap.nombre }}
+        </h3>
+        <button (click)="closeMapModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+          ×
+        </button>
+      </div>
+
+      <!-- Información del acopiador -->
+      <div class="bg-gray-50 p-4 rounded-lg mb-4">
+        <div class="grid grid-cols-1 gap-2">
+          <div><strong>ID:</strong> {{ selectedAcopiadorForMap.idProveedor }}</div>
+          <div><strong>Nombre:</strong> {{ selectedAcopiadorForMap.nombre }}</div>
+          @if (selectedAcopiadorForMap.idSagarpa) {
+          <div><strong>ID SAGARPA:</strong> {{ selectedAcopiadorForMap.idSagarpa }}</div>
+          }
+        </div>
+      </div>
+
+      <!-- Coordenadas -->
+      <div class="bg-blue-50 p-4 rounded-lg mb-4">
+        <h4 class="font-semibold text-blue-800 mb-2">🗺️ Coordenadas GPS</h4>
+        @if (selectedAcopiadorForMap.latitud && selectedAcopiadorForMap.longitud) {
+        <div class="grid grid-cols-1 gap-2">
+          <div class="flex justify-between">
+            <span class="font-medium">Latitud:</span>
+            <span class="font-mono text-blue-600">{{ selectedAcopiadorForMap.latitud }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Longitud:</span>
+            <span class="font-mono text-blue-600">{{ selectedAcopiadorForMap.longitud }}</span>
+          </div>
+          <div class="mt-3 text-xs text-gray-600">
+            📌 Coordenadas: {{ selectedAcopiadorForMap.latitud }}, {{ selectedAcopiadorForMap.longitud }}
+          </div>
+        </div>
+        } @else {
+        <div class="text-center text-gray-500 py-4">
+          ⚠️ No hay coordenadas registradas para este acopiador
+        </div>
+        }
+      </div>
+
+      <!-- Botones del modal -->
+      <div class="flex justify-end space-x-3">
+        @if (selectedAcopiadorForMap.latitud && selectedAcopiadorForMap.longitud) {
+        <a [href]="'https://www.google.com/maps?q=' + selectedAcopiadorForMap.latitud + ',' + selectedAcopiadorForMap.longitud"
+          target="_blank"
+          class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm transition-colors">
+          🌐 Ver en Google Maps
+        </a>
+        }
+        <button (click)="closeMapModal()"
+          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Modal CSF (Constancia de Situación Fiscal) -->
+@if (showCsfModal && selectedAcopiadorForCsf) {
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeCsfModal()">
+  <div class="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+
+    <!-- Header del modal -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-xl font-bold text-gray-900">
+          📄 {{ csfModalMode === 'view' ? 'Visualizar CSF' : 'Subir CSF' }}
+        </h2>
+        <p class="text-sm text-gray-600 mt-1">
+          <strong>Acopiador:</strong> {{ selectedAcopiadorForCsf.nombre }} |
+          <strong>ID:</strong> {{ selectedAcopiadorForCsf.idProveedor }}
+          @if (selectedAcopiadorForCsf.hasCsf && selectedAcopiadorForCsf.csfFile) {
+          | <span class="text-green-600">✅ Tiene CSF</span>
+          }
+        </p>
+      </div>
+      <button (click)="closeCsfModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+        ×
+      </button>
+    </div>
+
+    <!-- Contenido del modal según el modo -->
+    @if (csfModalMode === 'upload') {
+    <!-- Área de subida de archivos -->
+    <div class="mb-6 p-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+      <div class="text-center">
+        @if (!selectedCsfFile) {
+        <div>
+          <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+            <path
+              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">Subir CSF (PDF)</h3>
+          <p class="mt-1 text-sm text-gray-500">Selecciona un archivo PDF de la Constancia de Situación Fiscal</p>
+          <div class="mt-4">
+            <label
+              class="cursor-pointer bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition-colors">
+              📄 Seleccionar PDF
+              <input type="file" class="hidden" accept=".pdf" (change)="onCsfFileSelected($event)">
+            </label>
+          </div>
+        </div>
+        } @else {
+        <div>
+          <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">PDF Seleccionado</h3>
+          <p class="mt-1 text-sm text-gray-600">{{ selectedCsfFile.name }}</p>
+          <p class="text-xs text-gray-500">{{ (selectedCsfFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+          <div class="mt-4 space-x-2">
+            <button (click)="uploadCsf()" [disabled]="uploadingCsf"
+              class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded text-sm transition-colors">
+              @if (uploadingCsf) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              Subiendo...
+              } @else {
+              ☁️ Subir CSF
+              }
+            </button>
+            <button (click)="removeCsfFile()"
+              class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition-colors">
+              🗑️ Quitar
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+    } @else {
+    <!-- Modo de visualización -->
+    <div class="mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div class="flex items-center">
+          <svg class="h-6 w-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+            </path>
+          </svg>
+          <div>
+            <h3 class="text-sm font-medium text-blue-900">CSF Actual</h3>
+            <p class="text-xs text-blue-700">
+              Archivo: {{ selectedAcopiadorForCsf.csfFile }}
+              @if (selectedAcopiadorForCsf.csfUploadDate) {
+              | Subido: {{ selectedAcopiadorForCsf.csfUploadDate | date:'dd/MM/yyyy HH:mm' }}
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Vista previa del PDF (para ambos modos) -->
+    @if (csfFileUrl) {
+    <div class="mb-6">
+      <h3 class="text-lg font-medium text-gray-900 mb-3">Vista Previa</h3>
+      <div class="border rounded-lg overflow-hidden bg-gray-100" style="height: 500px;">
+        <object [data]="csfFileUrl" type="application/pdf" class="w-full h-full">
+          <embed [src]="csfFileUrl" type="application/pdf" class="w-full h-full" />
+          <p class="p-4 text-center text-gray-600">
+            📄 Vista previa no disponible.
+            @if (csfModalMode === 'upload' && selectedCsfFile) {
+            <br>Archivo: {{ selectedCsfFile.name }}
+            <br>Tamaño: {{ (selectedCsfFile.size / 1024 / 1024).toFixed(2) }} MB
+            } @else if (csfModalMode === 'view') {
+            <br>Archivo: {{ selectedAcopiadorForCsf.csfFile }}
+            }
+          </p>
+        </object>
+      </div>
+    </div>
+    }
+
+    <!-- Error message -->
+    @if (error) {
+    <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+      {{ error }}
+    </div>
+    }
+
+    <!-- Botones del modal -->
+    <div class="flex justify-between items-center">
+      <!-- Botones de gestión CSF (solo si ya tiene CSF) -->
+      @if (selectedAcopiadorForCsf && selectedAcopiadorForCsf.hasCsf && selectedAcopiadorForCsf.csfFile) {
+        <div class="flex space-x-2">
+          <button (click)="switchToViewMode()" 
+            [class]="csfModalMode === 'view' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
+            class="px-3 py-2 rounded text-sm font-medium transition-colors hover:bg-blue-700">
+            👁️ Visualizar
+          </button>
+          
+          <button (click)="downloadCsf(selectedAcopiadorForCsf)"
+            class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition-colors">
+            ⬇️ Descargar
+          </button>
+          
+          <button (click)="switchToUploadMode()"
+            [class]="csfModalMode === 'upload' ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-700'"
+            class="px-3 py-2 rounded text-sm font-medium transition-colors hover:bg-orange-700">
+            🔄 Reemplazar
+          </button>
+          
+          <button (click)="deleteCsf(selectedAcopiadorForCsf)"
+            class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors">
+            🗑️ Eliminar
+          </button>
+        </div>
+      } @else {
+        <div></div>
+      }
+      
+      <!-- Botón cerrar -->
+      <button (click)="closeCsfModal()"
+        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded text-sm transition-colors">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+}

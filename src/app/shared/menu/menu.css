@@ -1,0 +1,42 @@
+/* Estilos globales del layout principal */
+
+/* Asegurar que el layout ocupe toda la altura */
+.min-h-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header navigation styles */
+nav a.router-link-active {
+  color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+/* Transition effects */
+nav a {
+  transition: all 0.2s ease-in-out;
+}
+
+nav a:hover {
+  transform: translateY(-1px);
+}
+
+/* Main content area */
+main {
+  flex: 1;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .max-w-7xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  nav {
+    display: none;
+  }
+}
