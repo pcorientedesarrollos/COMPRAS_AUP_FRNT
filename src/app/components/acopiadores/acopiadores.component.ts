@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AcopiadorService, ApiResponse, PaginatedResponse } from '../../services/acopiador.service';
 import { Acopiador, UpdateAcopiadorRequest } from '../../models/acopiador.interface';
+import { DatosFiscalesService } from '../../services/datosfiscales.service';
 
 @Component({
   selector: 'app-acopiadores',
@@ -97,6 +98,7 @@ export class AcopiadoresComponent implements OnInit {
 
   constructor(
     private acopiadorService: AcopiadorService,
+    private datosFiscalesService: DatosFiscalesService,
     private router: Router,
     private sanitizer: DomSanitizer
   ) {}
@@ -452,6 +454,18 @@ export class AcopiadoresComponent implements OnInit {
     });
   }
 
+  verApicultores(acopiador: Acopiador): void {
+    // Aquí puedes implementar la lógica para ver los apicultores relacionados con este acopiador
+    console.log('Ver apicultores del acopiador:', acopiador);
+    this.menuAbierto = null; // Cerrar el menú emergente
+
+    // Por ahora mostramos un mensaje de que la funcionalidad está en desarrollo
+    alert(`Ver apicultores de: ${acopiador.nombre}\n\nEsta funcionalidad estará disponible próximamente.`);
+
+    // TODO: Implementar navegación a vista de apicultores o abrir modal con lista
+    // this.router.navigate(['/apicultores', acopiador.idProveedor]);
+  }
+
   verEnMapa(acopiador: Acopiador): void {
     // Verificar que el acopiador tenga coordenadas
     if (!acopiador.latitud || !acopiador.longitud) {
@@ -800,14 +814,16 @@ export class AcopiadoresComponent implements OnInit {
     this.uploadingCsf = true;
     this.error = null;
 
-    this.acopiadorService.uploadCSF(this.selectedAcopiadorForCsf.idDatosFiscales, this.selectedCsfFile).subscribe({
+    // Usar el método simple de upload (sin extracción)
+    this.datosFiscalesService.uploadCSF(this.selectedAcopiadorForCsf.idDatosFiscales, this.selectedCsfFile).subscribe({
       next: (response) => {
         this.uploadingCsf = false;
         if (response.success) {
           alert(`CSF subido exitosamente para ${this.selectedAcopiadorForCsf?.nombre}`);
-          this.closeCsfModal();
-          // Opcional: recargar datos para mostrar que tiene CSF
+          // Recargar datos para mostrar que tiene CSF
           this.loadAcopiadores();
+          // Cerrar el modal
+          this.closeCsfModal();
         } else {
           this.error = response.message || 'Error al subir el archivo CSF';
         }
